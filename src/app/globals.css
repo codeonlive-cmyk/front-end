@@ -27,7 +27,7 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply bg-[#ffd700] text-[#0f172a] font-bold py-3 px-8 rounded-lg transition-all duration-400 ease-out hover:bg-[#ffed4e] hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(255, 215, 0, 0.3)];
+    @apply bg-[#ffd700] text-[#0f172a] font-bold py-3 px-8 rounded-lg transition-all duration-400 ease-out hover:bg-[#ffed4e] hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(255,215,0,0.3)];
   }
 
   .btn-secondary {
