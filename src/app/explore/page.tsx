@@ -3,39 +3,67 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Search, Filter, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Header from "@/components/Header";
 
 const CATEGORIES = [
     { id: "all", label: "All" },
-    { id: "ai-ml", label: "AI/ML" },
-    { id: "web", label: "Web Development" },
-    { id: "backend", label: "Backend" },
-    { id: "data", label: "Data Science" },
-    { id: "mobile", label: "Mobile" },
+    { id: "Web Development", label: "Web Development" },
+    { id: "AI & Data", label: "AI & Data" },
+    { id: "Infrastructure", label: "Infrastructure" },
 ];
 
 export default function ExplorePage() {
-    const [skills, setSkills] = useState<any[]>([]);
+    const [paths, setPaths] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState("all");
     const [search, setSearch] = useState("");
+    const router = useRouter();
 
     useEffect(() => {
-        const fetchSkills = async () => {
+        const fetchPaths = async () => {
             try {
-                const data: any = await api.get("/skills");
-                setSkills(data);
+                const data: any = await api.get("/learning/paths");
+                setPaths(data);
             } catch (err) {
-                console.error("Failed to fetch skills", err);
+                console.error("Failed to fetch learning paths", err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchSkills();
+        fetchPaths();
     }, []);
 
+    const filteredPaths = paths.filter(path => {
+        const matchesCategory = activeCategory === "all" || path.category === activeCategory;
+        const matchesSearch = search === "" || 
+            path.name.toLowerCase().includes(search.toLowerCase()) ||
+            path.description.toLowerCase().includes(search.toLowerCase());
+        return matchesCategory && matchesSearch;
+    });
+
+    const handleEnroll = async (pathId: number) => {
+        // Check if user is logged in
+        const token = localStorage.getItem("vle_token");
+        if (!token) {
+            // Redirect to login if not authenticated
+            router.push("/login");
+            return;
+        }
+
+        try {
+            await api.post("/learning/enroll", { pathId });
+            router.push(`/learning?path=${pathId}`);
+        } catch (err) {
+            console.error("Failed to enroll", err);
+        }
+    };
+
     return (
-        <div className="min-h-screen pb-20">
-            <header className="py-20 px-8 text-center space-y-4">
+        <>
+            <Header />
+            <div className="min-h-screen pb-20 pt-20">
+                <header className="py-20 px-8 text-center space-y-4">
                 <h1 className="text-5xl font-black text-[#ffd700]">Explore Career Paths</h1>
                 <p className="text-xl text-slate-400 font-medium">Choose your target role and start your verified learning journey</p>
             </header>
@@ -74,23 +102,14 @@ export default function ExplorePage() {
 
             <main className="max-w-[1400px] mx-auto px-8">
                 {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                        {[1, 2, 3, 4].map(i => <div key={i} className="h-80 rounded-[32px] bg-white/5 animate-pulse" />)}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-96 rounded-[32px] bg-white/5 animate-pulse" />)}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                        {skills.map((skill) => (
-                            <GoalCard key={skill.id} skill={skill} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {filteredPaths.map((path) => (
+                            <PathCard key={path.id} path={path} onEnroll={handleEnroll} />
                         ))}
-                        {/* Mock cards to fill the display if backend is empty */}
-                        {skills.length === 0 && (
-                            <>
-                                <GoalCard skill={{ name: "AI/ML Engineer", description: "Build and deploy machine learning models and AI systems", icon: "🤖", tags: ["Python", "TensorFlow"] }} />
-                                <GoalCard skill={{ name: "Backend Developer", description: "Design and build server-side applications and APIs", icon: "⚙️", tags: ["Node.js", "PostgreSQL"] }} />
-                                <GoalCard skill={{ name: "Full Stack Developer", description: "Build complete web applications from frontend to backend", icon: "💻", tags: ["React", "MongoDB"] }} />
-                                <GoalCard skill={{ name: "Data Scientist", description: "Extract insights from data using statistics and ML", icon: "📊", tags: ["Python", "Pandas"] }} />
-                            </>
-                        )}
                     </div>
                 )}
             </main>
@@ -117,28 +136,41 @@ export default function ExplorePage() {
                     </ul>
                 </div>
             </section>
-        </div>
+            </div>
+        </>
     );
 }
 
-function GoalCard({ skill }: { skill: any }) {
+function PathCard({ path, onEnroll }: { path: any; onEnroll: (id: number) => void }) {
+    const difficultyColors = {
+        beginner: "bg-green-500/20 text-green-500",
+        intermediate: "bg-yellow-500/20 text-yellow-500",
+        advanced: "bg-red-500/20 text-red-500"
+    };
+
     return (
         <div className="bg-[#0f172a]/95 border border-white/10 p-8 rounded-[32px] backdrop-blur-md transition-all hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(255,215,0,0.1)] group">
-            <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-500">{skill.icon || "🎓"}</div>
-            <h3 className="text-2xl font-black text-white mb-3 tracking-tight">{skill.name}</h3>
-            <p className="text-slate-500 text-sm leading-relaxed mb-8 line-clamp-3 font-medium">
-                {skill.description || "Master the core competencies required for this career path through verified achievement."}
+            <div className="flex items-start justify-between mb-4">
+                <div className="text-5xl group-hover:scale-110 transition-transform duration-500">{path.icon || "🎓"}</div>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${difficultyColors[path.difficulty as keyof typeof difficultyColors]}`}>
+                    {path.difficulty}
+                </span>
+            </div>
+            
+            <h3 className="text-2xl font-black text-white mb-3 tracking-tight">{path.name}</h3>
+            <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-3 font-medium">
+                {path.description}
             </p>
 
-            <div className="flex flex-wrap gap-2 mb-8">
-                {(skill.tags || ["VLE-Verified", "Path"]).map((tag: string) => (
-                    <span key={tag} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black text-[#ffd700] uppercase tracking-widest">
-                        {tag}
-                    </span>
-                ))}
+            <div className="flex items-center gap-4 mb-6 text-xs text-slate-400">
+                <span>⏱️ {path.estimated_hours}h</span>
+                <span>📚 {path.category}</span>
             </div>
 
-            <button className="w-full btn-primary py-4 rounded-2xl flex items-center justify-center gap-2">
+            <button 
+                onClick={() => onEnroll(path.id)}
+                className="w-full btn-primary py-4 rounded-2xl flex items-center justify-center gap-2"
+            >
                 Start Learning
                 <ChevronRight className="w-4 h-4" />
             </button>
