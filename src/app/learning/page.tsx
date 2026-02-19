@@ -6,6 +6,8 @@ import { api } from "@/lib/api";
 import { CheckCircle2, Circle, PlayCircle, FileText, Clock, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 function LearningContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
