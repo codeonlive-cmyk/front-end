@@ -212,7 +212,7 @@ export default function MyLearningPage() {
                 {/* Add More Skills */}
                 <div className="mt-8">
                     <Link
-                        href="/explore"
+                        href="/roadmaps"
                         className="block bg-white/5 backdrop-blur-sm border border-white/10 border-dashed rounded-2xl p-8 text-center hover:bg-white/10 hover:border-[#ffd700]/50 transition-all group"
                     >
                         <BookOpen className="w-12 h-12 text-gray-400 group-hover:text-[#ffd700] mx-auto mb-4 transition-colors" />

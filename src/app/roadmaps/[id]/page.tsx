@@ -50,9 +50,12 @@ export default function RoadmapDetailPage() {
     const [expandedPhases, setExpandedPhases] = useState<Set<number>>(new Set([1]));
     const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set());
     const [nodeResources, setNodeResources] = useState<Record<number, Resource[]>>({});
+    const [completedNodes, setCompletedNodes] = useState<Set<number>>(new Set());
+    const [updatingNode, setUpdatingNode] = useState<number | null>(null);
 
     useEffect(() => {
         fetchRoadmap();
+        fetchUserProgress();
     }, [params.id]);
 
     const fetchRoadmap = async () => {
@@ -63,6 +66,42 @@ export default function RoadmapDetailPage() {
             console.error("Failed to fetch roadmap:", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchUserProgress = async () => {
+        try {
+            const token = localStorage.getItem("vle_token");
+            if (!token) return;
+
+            const data: any = await api.get(`/roadmaps/${params.id}/progress`);
+            const completedNodeIds: number[] = data.nodes
+                ?.filter((n: any) => n.status === 'completed' || n.status === 'verified')
+                .map((n: any) => n.node_id as number) || [];
+            const completed = new Set<number>(completedNodeIds);
+            setCompletedNodes(completed);
+        } catch (err) {
+            console.error("Failed to fetch progress:", err);
+        }
+    };
+
+    const markAsComplete = async (nodeId: number) => {
+        const token = localStorage.getItem("vle_token");
+        if (!token) {
+            router.push("/login");
+            return;
+        }
+
+        setUpdatingNode(nodeId);
+        try {
+            await api.put(`/roadmaps/nodes/${nodeId}/progress`, { status: 'completed' });
+            setCompletedNodes(prev => new Set([...prev, nodeId]));
+            alert("✅ Topic marked as complete!");
+        } catch (err) {
+            console.error("Failed to update progress:", err);
+            alert("Failed to mark as complete. Please try again.");
+        } finally {
+            setUpdatingNode(null);
         }
     };
 
@@ -195,12 +234,19 @@ export default function RoadmapDetailPage() {
                                                 onClick={() => toggleNode(node.id)}
                                                 className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-all"
                                             >
-                                                <div className="text-left flex-1">
-                                                    <h4 className="text-lg font-semibold text-white">{node.title}</h4>
-                                                    <p className="text-gray-400 text-sm">{node.description}</p>
-                                                    <span className="text-xs text-gray-500 mt-1 inline-block">
-                                                        ~{node.estimated_hours}h
-                                                    </span>
+                                                <div className="text-left flex-1 flex items-center gap-3">
+                                                    {completedNodes.has(node.id) && (
+                                                        <CheckCircle className="text-green-500 flex-shrink-0" size={20} />
+                                                    )}
+                                                    <div>
+                                                        <h4 className={`text-lg font-semibold ${completedNodes.has(node.id) ? 'text-green-400' : 'text-white'}`}>
+                                                            {node.title}
+                                                        </h4>
+                                                        <p className="text-gray-400 text-sm">{node.description}</p>
+                                                        <span className="text-xs text-gray-500 mt-1 inline-block">
+                                                            ~{node.estimated_hours}h
+                                                        </span>
+                                                    </div>
                                                 </div>
                                                 {expandedNodes.has(node.id) ? (
                                                     <ChevronUp className="text-[#ffd700]" size={20} />
@@ -209,35 +255,63 @@ export default function RoadmapDetailPage() {
                                                 )}
                                             </button>
 
-                                            {expandedNodes.has(node.id) && nodeResources[node.id] && (
-                                                <div className="px-4 pb-4 space-y-2">
-                                                    <h5 className="text-sm font-semibold text-gray-300 mb-2">Learning Resources:</h5>
-                                                    {nodeResources[node.id].map(resource => (
-                                                        <a
-                                                            key={resource.id}
-                                                            href={resource.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="block p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all border border-white/5 hover:border-[#ffd700]/30"
-                                                        >
-                                                            <div className="flex items-start justify-between">
-                                                                <div className="flex-1">
-                                                                    <div className="flex items-center gap-2 mb-1">
-                                                                        <span className="text-xs px-2 py-0.5 bg-[#ffd700]/20 text-[#ffd700] rounded uppercase font-medium">
-                                                                            {resource.resource_type}
-                                                                        </span>
-                                                                        {resource.duration_minutes && (
-                                                                            <span className="text-xs text-gray-500">
-                                                                                {resource.duration_minutes}min
-                                                                            </span>
-                                                                        )}
+                                            {expandedNodes.has(node.id) && (
+                                                <div className="px-4 pb-4 space-y-4">
+                                                    {/* Mark as Complete Button */}
+                                                    {!completedNodes.has(node.id) && (
+                                                        <div className="flex justify-end">
+                                                            <button
+                                                                onClick={() => markAsComplete(node.id)}
+                                                                disabled={updatingNode === node.id}
+                                                                className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all border border-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                {updatingNode === node.id ? (
+                                                                    <>
+                                                                        <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin"></div>
+                                                                        <span className="text-sm font-medium">Updating...</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <CheckCircle size={16} />
+                                                                        <span className="text-sm font-medium">Mark as Complete</span>
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Resources */}
+                                                    {nodeResources[node.id] && (
+                                                        <>
+                                                            <h5 className="text-sm font-semibold text-gray-300 mb-2">Learning Resources:</h5>
+                                                            {nodeResources[node.id].map(resource => (
+                                                                <a
+                                                                    key={resource.id}
+                                                                    href={resource.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="block p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all border border-white/5 hover:border-[#ffd700]/30"
+                                                                >
+                                                                    <div className="flex items-start justify-between">
+                                                                        <div className="flex-1">
+                                                                            <div className="flex items-center gap-2 mb-1">
+                                                                                <span className="text-xs px-2 py-0.5 bg-[#ffd700]/20 text-[#ffd700] rounded uppercase font-medium">
+                                                                                    {resource.resource_type}
+                                                                                </span>
+                                                                                {resource.duration_minutes && (
+                                                                                    <span className="text-xs text-gray-500">
+                                                                                        {resource.duration_minutes}min
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            <p className="text-white text-sm font-medium">{resource.title}</p>
+                                                                            <p className="text-xs text-gray-500 mt-1">{resource.provider}</p>
+                                                                        </div>
                                                                     </div>
-                                                                    <p className="text-white text-sm font-medium">{resource.title}</p>
-                                                                    <p className="text-xs text-gray-500 mt-1">{resource.provider}</p>
-                                                                </div>
-                                                            </div>
-                                                        </a>
-                                                    ))}
+                                                                </a>
+                                                            ))}
+                                                        </>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
