@@ -1,12 +1,13 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/(auth)/signup/page": "app/(auth)/signup/page.js",
-  "/my-learning/page": "app/my-learning/page.js",
   "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(auth)/signup/page": "app/(auth)/signup/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/cv-builder/page": "app/cv-builder/page.js",
-  "/roadmaps/[id]/page": "app/roadmaps/[id]/page.js",
-  "/page": "app/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/roadmaps/page": "app/roadmaps/page.js",
-  "/learning/page": "app/learning/page.js"
+  "/learning/page": "app/learning/page.js",
+  "/my-learning/page": "app/my-learning/page.js",
+  "/page": "app/page.js",
+  "/roadmaps/[id]/page": "app/roadmaps/[id]/page.js",
+  "/roadmaps/page": "app/roadmaps/page.js"
 }

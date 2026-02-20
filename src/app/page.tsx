@@ -129,20 +129,49 @@ export default function Home() {
                     </div>
 
                     <div className="max-w-6xl mx-auto">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+                        {/* Mobile: Stack vertically */}
+                        <div className="flex flex-col md:hidden gap-8">
                             <StepCard number="01" title="Select Goal" desc="Choose your target role or learning direction." />
-                            <div className="hidden md:block relative h-24">
-                                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-[#ffd700] to-transparent"></div>
-                            </div>
                             <StepCard number="02" title="Explore Graph" desc="View a structured roadmap of required skills." />
-                            <div className="hidden md:block relative h-24">
-                                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-[#ffd700] to-transparent"></div>
-                            </div>
                             <StepCard number="03" title="Verify Skills" desc="Complete verification tasks to unlock progress." />
-                            <div className="hidden md:block relative h-24">
-                                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-[#ffd700] to-transparent"></div>
-                            </div>
                             <StepCard number="04" title="Progress" desc="Unlock new skills and build your verified profile." />
+                        </div>
+
+                        {/* Desktop: Horizontal with connectors */}
+                        <div className="hidden md:flex items-start justify-between">
+                            <div className="flex items-start flex-1 group">
+                                <div className="flex-1">
+                                    <StepCard number="01" title="Select Goal" desc="Choose your target role or learning direction." />
+                                </div>
+                                <div className="relative w-20 flex-shrink-0 pt-8 mx-4">
+                                    <div className="w-full h-0.5 bg-[#ffd700]/20"></div>
+                                    <div className="absolute top-8 left-0 w-full h-0.5 bg-[#ffd700] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out"></div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-start flex-1 group">
+                                <div className="flex-1">
+                                    <StepCard number="02" title="Explore Graph" desc="View a structured roadmap of required skills." />
+                                </div>
+                                <div className="relative w-20 flex-shrink-0 pt-8 mx-4">
+                                    <div className="w-full h-0.5 bg-[#ffd700]/20"></div>
+                                    <div className="absolute top-8 left-0 w-full h-0.5 bg-[#ffd700] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out"></div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-start flex-1 group">
+                                <div className="flex-1">
+                                    <StepCard number="03" title="Verify Skills" desc="Complete verification tasks to unlock progress." />
+                                </div>
+                                <div className="relative w-20 flex-shrink-0 pt-8 mx-4">
+                                    <div className="w-full h-0.5 bg-[#ffd700]/20"></div>
+                                    <div className="absolute top-8 left-0 w-full h-0.5 bg-[#ffd700] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-out"></div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex-1">
+                                <StepCard number="04" title="Progress" desc="Unlock new skills and build your verified profile." />
+                            </div>
                         </div>
                     </div>
                 </section>

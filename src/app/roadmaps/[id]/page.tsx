@@ -5,6 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { ChevronDown, ChevronUp, Play, CheckCircle, Clock } from "lucide-react";
+import Toast from "@/components/Toast";
+
+// Determine if we're in production based on window location
+const IS_PRODUCTION = typeof window !== 'undefined' && 
+    (window.location.hostname.includes('vle.digital') || window.location.hostname.includes('amplifyapp.com'));
 
 interface Resource {
     id: number;
@@ -52,10 +57,24 @@ export default function RoadmapDetailPage() {
     const [nodeResources, setNodeResources] = useState<Record<number, Resource[]>>({});
     const [completedNodes, setCompletedNodes] = useState<Set<number>>(new Set());
     const [updatingNode, setUpdatingNode] = useState<number | null>(null);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     useEffect(() => {
         fetchRoadmap();
         fetchUserProgress();
+        
+        // Refresh progress when page becomes visible (user returns from another page)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchUserProgress();
+            }
+        };
+        
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [params.id]);
 
     const fetchRoadmap = async () => {
@@ -63,7 +82,10 @@ export default function RoadmapDetailPage() {
             const data: any = await api.get(`/roadmaps/${params.id}`);
             setRoadmap(data);
         } catch (err) {
-            console.error("Failed to fetch roadmap:", err);
+            // Only log in development
+            if (!IS_PRODUCTION) {
+                console.error("Failed to fetch roadmap:", err);
+            }
         } finally {
             setLoading(false);
         }
@@ -81,7 +103,10 @@ export default function RoadmapDetailPage() {
             const completed = new Set<number>(completedNodeIds);
             setCompletedNodes(completed);
         } catch (err) {
-            console.error("Failed to fetch progress:", err);
+            // Only log in development
+            if (!IS_PRODUCTION) {
+                console.error("Failed to fetch progress:", err);
+            }
         }
     };
 
@@ -94,12 +119,34 @@ export default function RoadmapDetailPage() {
 
         setUpdatingNode(nodeId);
         try {
-            await api.put(`/roadmaps/nodes/${nodeId}/progress`, { status: 'completed' });
+            // First, ensure user is enrolled in this roadmap
+            await api.post(`/roadmaps/${params.id}/start`).catch(() => {
+                // Ignore error if already enrolled
+            });
+
+            // Update node progress
+            await api.put(`/roadmaps/nodes/${nodeId}/progress`, { 
+                status: 'completed' 
+            });
+
+            // Update local state
             setCompletedNodes(prev => new Set([...prev, nodeId]));
-            alert("✅ Topic marked as complete!");
-        } catch (err) {
-            console.error("Failed to update progress:", err);
-            alert("Failed to mark as complete. Please try again.");
+            
+            // Refresh progress to get updated counts
+            await fetchUserProgress();
+            
+            // Show success toast
+            setToast({ message: "Topic marked as complete!", type: "success" });
+        } catch (err: any) {
+            // Only log in development
+            if (!IS_PRODUCTION) {
+                console.error("Failed to update progress:", err);
+            }
+            // Show error toast only
+            setToast({ 
+                message: "Failed to mark as complete. Please try again.", 
+                type: "error" 
+            });
         } finally {
             setUpdatingNode(null);
         }
@@ -127,7 +174,10 @@ export default function RoadmapDetailPage() {
                     const data: any = await api.get(`/roadmaps/${params.id}/nodes/${nodeId}/resources`);
                     setNodeResources(prev => ({ ...prev, [nodeId]: data.resources }));
                 } catch (err) {
-                    console.error("Failed to fetch resources:", err);
+                    // Only log in development
+                    if (!IS_PRODUCTION) {
+                        console.error("Failed to fetch resources:", err);
+                    }
                 }
             }
         }
@@ -144,12 +194,15 @@ export default function RoadmapDetailPage() {
 
         try {
             await api.post(`/roadmaps/${params.id}/start`);
-            alert("Roadmap started! Check your progress in My Learning.");
-            // Optionally redirect to My Learning
-            router.push("/my-learning");
+            setToast({ message: "Roadmap started! Redirecting...", type: "success" });
+            // Redirect to My Learning
+            setTimeout(() => router.push("/my-learning"), 1500);
         } catch (err: any) {
-            console.error("Failed to start roadmap:", err);
-            alert("Failed to start roadmap. Please try again.");
+            // Only log in development
+            if (!IS_PRODUCTION) {
+                console.error("Failed to start roadmap:", err);
+            }
+            setToast({ message: "Failed to start roadmap. Please try again.", type: "error" });
         }
     };
 
@@ -171,6 +224,14 @@ export default function RoadmapDetailPage() {
 
     return (
         <div className="min-h-screen p-8">
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+            
             <div className="max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">

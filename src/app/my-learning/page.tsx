@@ -27,6 +27,19 @@ export default function MyLearningPage() {
 
     useEffect(() => {
         checkAuthAndFetch();
+        
+        // Refresh data when page becomes visible (user returns from another page)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                checkAuthAndFetch();
+            }
+        };
+        
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, []);
 
     const checkAuthAndFetch = async () => {

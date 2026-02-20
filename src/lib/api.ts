@@ -1,4 +1,8 @@
 const API_URL = "https://api.vle.digital";
+//const API_URL = "http://localhost:3001";
+
+// Determine if we're in production based on the API URL
+const IS_PRODUCTION = API_URL.includes('vle.digital') || API_URL.includes('https://');
 
 class ApiClient {
     private baseUrl: string;
@@ -45,6 +49,11 @@ class ApiClient {
             return response.json();
         } catch (error) {
             // Network errors or other fetch failures
+            // Only log errors in development (when using localhost)
+            if (!IS_PRODUCTION) {
+                console.error('API Error:', error);
+            }
+            
             if (error instanceof Error) {
                 throw error;
             }

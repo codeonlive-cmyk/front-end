@@ -16,6 +16,19 @@ export default function DashboardPage() {
 
     useEffect(() => {
         checkAuth();
+        
+        // Refresh data when page becomes visible (user returns from another page)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                checkAuth();
+            }
+        };
+        
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, []);
 
     const checkAuth = async () => {
@@ -112,8 +125,15 @@ export default function DashboardPage() {
     }
 
     // Logged in - show dashboard
-    const totalNodes = progress?.roadmaps?.reduce((sum: number, r: any) => sum + (r.total_nodes || 0), 0) || 0;
-    const completedNodes = progress?.roadmaps?.reduce((sum: number, r: any) => sum + (r.completed_nodes || 0), 0) || 0;
+    const totalNodes = progress?.roadmaps?.reduce((sum: number, r: any) => {
+        const nodes = parseInt(r.total_nodes) || 0;
+        return sum + nodes;
+    }, 0) || 0;
+    
+    const completedNodes = progress?.roadmaps?.reduce((sum: number, r: any) => {
+        const completed = parseInt(r.completed_nodes) || 0;
+        return sum + completed;
+    }, 0) || 0;
 
     return (
         <>

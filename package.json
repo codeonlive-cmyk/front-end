@@ -9,20 +9,40 @@
         "lint": "next lint"
     },
     "dependencies": {
+        "aws-amplify": "^6.16.2",
+        "clsx": "^2.1.1",
+        "lucide-react": "^0.468.0",
         "next": "16.0.2",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
-        "lucide-react": "^0.468.0",
-        "clsx": "^2.1.1",
         "tailwind-merge": "^2.5.5"
     },
     "devDependencies": {
+        "@aws-amplify/backend": "^1.21.0",
+        "@aws-amplify/backend-cli": "^1.8.2",
         "@types/node": "^20.17.10",
         "@types/react": "^19.0.1",
         "@types/react-dom": "^19.0.1",
         "autoprefixer": "^10.4.20",
+        "aws-cdk-lib": "^2.234.1",
+        "constructs": "^10.5.1",
+        "esbuild": "^0.27.3",
         "postcss": "^8.4.49",
         "tailwindcss": "^3.4.16",
-        "typescript": "^5.7.2"
-    }
+        "tsx": "^4.21.0",
+        "typescript": "^5.9.3"
+    },
+    "description": "",
+    "main": "index.js",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/codeonlive-cmyk/front-end.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/codeonlive-cmyk/front-end/issues"
+    },
+    "homepage": "https://github.com/codeonlive-cmyk/front-end#readme"
 }
